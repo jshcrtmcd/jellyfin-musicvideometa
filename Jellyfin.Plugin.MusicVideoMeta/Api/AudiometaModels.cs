@@ -58,6 +58,10 @@ public class AmAlbum
     [JsonPropertyName("album_type")]
     public string? AlbumType { get; set; }
 
+    /// <summary>Gets or sets the cover images.</summary>
+    [JsonPropertyName("images")]
+    public List<AmImage>? Images { get; set; }
+
     /// <summary>Gets or sets the release date (YYYY, YYYY-MM or YYYY-MM-DD).</summary>
     [JsonPropertyName("release_date")]
     public string? ReleaseDate { get; set; }

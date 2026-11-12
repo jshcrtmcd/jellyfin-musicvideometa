@@ -34,6 +34,12 @@ public class ResolvedVideo
     /// <summary>Gets or sets an online artist photo, used when there is no local one.</summary>
     public string? ArtistImageUrl { get; set; }
 
+    /// <summary>Gets or sets the album or single cover on disk, from the Music library.</summary>
+    public string? AlbumImagePath { get; set; }
+
+    /// <summary>Gets or sets an online album or single cover, used when there is no local one.</summary>
+    public string? AlbumImageUrl { get; set; }
+
     /// <summary>Gets or sets where the data came from, for the log.</summary>
     public string Sources { get; set; } = string.Empty;
 

@@ -140,7 +140,8 @@ public sealed class MusicLibraryIndex : IDisposable
     /// <param name="Year">Year.</param>
     /// <param name="Album">Album.</param>
     /// <param name="Genres">Genres.</param>
-    public sealed record SongInfo(string Title, int? Year, string? Album, IReadOnlyList<string> Genres);
+    /// <param name="AlbumImagePath">The album cover on disk, if any.</param>
+    public sealed record SongInfo(string Title, int? Year, string? Album, IReadOnlyList<string> Genres, string? AlbumImagePath);
 
     /// <summary>
     /// A Music library artist.
@@ -205,7 +206,7 @@ public sealed class MusicLibraryIndex : IDisposable
         public bool IsKnownArtist(string name) => FindArtist(name) is not null;
 
         /// <summary>
-        /// Whether a path is a Music library artist's photo.
+        /// Whether a path is a Music library artist photo or album cover.
         /// </summary>
         /// <param name="path">Path.</param>
         /// <returns>True if it is.</returns>
@@ -271,7 +272,17 @@ public sealed class MusicLibraryIndex : IDisposable
                 return;
             }
 
-            var info = new SongInfo(song.Name, song.ProductionYear, song.Album, song.Genres ?? []);
+            var cover = song.AlbumEntity?.GetImagePath(ImageType.Primary, 0);
+            if (string.IsNullOrEmpty(cover) || !System.IO.File.Exists(cover))
+            {
+                cover = null;
+            }
+            else
+            {
+                _imagePaths.Add(cover);
+            }
+
+            var info = new SongInfo(song.Name, song.ProductionYear, song.Album, song.Genres ?? [], cover);
             Add(key + "|" + NameNormalizer.Normalize(song.Name), info);
             Add(key + "|~" + NameNormalizer.TitleKey(song.Name), info);
 

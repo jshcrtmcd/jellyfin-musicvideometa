@@ -154,6 +154,7 @@ public class VideoResolver
 
             result.Year ??= song.Year;
             result.Album = song.Album ?? result.Album;
+            result.AlbumImagePath = song.AlbumImagePath;
             if (result.Genres.Count == 0)
             {
                 result.Genres = song.Genres;
@@ -162,7 +163,8 @@ public class VideoResolver
             sources.Add("music library song");
         }
 
-        if (result.Year is null || result.Album is null)
+        var wantCover = (Plugin.Instance?.Configuration.UseAlbumCoverForVideos ?? true) && result.AlbumImagePath is null;
+        if (result.Year is null || result.Album is null || wantCover)
         {
             await FillFromAudiometaAsync(result, sources, cancellationToken).ConfigureAwait(false);
         }
@@ -271,6 +273,7 @@ public class VideoResolver
         }
 
         result.Year ??= AudiometaClient.YearOf(best.Album?.ReleaseDate);
+        result.AlbumImageUrl ??= AudiometaClient.BestImageUrl(best.Album?.Images);
         var type = best.Album?.AlbumType;
         if (result.Album is null
             && !string.IsNullOrWhiteSpace(best.Album?.Name)

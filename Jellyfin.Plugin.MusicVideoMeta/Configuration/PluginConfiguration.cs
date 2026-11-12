@@ -49,6 +49,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool UseArtistImageForVideos { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether a video's image becomes the song's album or single cover when one is found.
+    /// Videos without a cover keep their own thumbnail.
+    /// </summary>
+    public bool UseAlbumCoverForVideos { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets a value indicating whether new videos are processed after each library scan.
     /// </summary>
     public bool RunAfterLibraryScan { get; set; } = true;

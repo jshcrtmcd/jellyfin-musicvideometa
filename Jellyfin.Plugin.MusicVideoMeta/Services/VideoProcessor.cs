@@ -212,9 +212,14 @@ public class VideoProcessor
 
         await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
 
-        if (config.UseArtistImageForVideos)
+        var hasCover = resolved.AlbumImagePath is not null || resolved.AlbumImageUrl is not null;
+        if (config.UseAlbumCoverForVideos && hasCover)
         {
-            await SetArtistImageAsync(item, resolved, cancellationToken).ConfigureAwait(false);
+            await SetImageAsync(item, resolved.AlbumImagePath, resolved.AlbumImageUrl, resolved.Title, cancellationToken).ConfigureAwait(false);
+        }
+        else if (config.UseArtistImageForVideos)
+        {
+            await SetImageAsync(item, resolved.ArtistImagePath, resolved.ArtistImageUrl, resolved.PrimaryArtist, cancellationToken).ConfigureAwait(false);
         }
 
         // If a file couldn't be written (for example a read-only folder), try again on the next run.
@@ -244,7 +249,7 @@ public class VideoProcessor
             }
 
             var artist = await _resolver.ResolveArtistImageAsync(Path.GetFileName(path!), cancellationToken).ConfigureAwait(false);
-            if (await SetArtistImageAsync(folder, artist, cancellationToken).ConfigureAwait(false))
+            if (await SetImageAsync(folder, artist.ArtistImagePath, artist.ArtistImageUrl, artist.PrimaryArtist, cancellationToken).ConfigureAwait(false))
             {
                 set++;
             }
@@ -253,32 +258,32 @@ public class VideoProcessor
         _logger.LogInformation("Artist photos set on {Count} artist folders", set);
     }
 
-    private async Task<bool> SetArtistImageAsync(BaseItem item, ResolvedVideo resolved, CancellationToken cancellationToken)
+    private async Task<bool> SetImageAsync(BaseItem item, string? imagePath, string? imageUrl, string label, CancellationToken cancellationToken)
     {
         try
         {
-            if (!string.IsNullOrEmpty(resolved.ArtistImagePath) && File.Exists(resolved.ArtistImagePath))
+            if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
             {
-                var stream = File.OpenRead(resolved.ArtistImagePath);
+                var stream = File.OpenRead(imagePath);
                 await using (stream.ConfigureAwait(false))
                 {
                     await _providerManager.SaveImage(
                         item,
                         stream,
-                        MimeTypes.GetMimeType(resolved.ArtistImagePath),
+                        MimeTypes.GetMimeType(imagePath),
                         ImageType.Primary,
                         null,
                         cancellationToken).ConfigureAwait(false);
                 }
             }
-            else if (!string.IsNullOrEmpty(resolved.ArtistImageUrl))
+            else if (!string.IsNullOrEmpty(imageUrl))
             {
-                await _providerManager.SaveImage(item, resolved.ArtistImageUrl, ImageType.Primary, null, cancellationToken)
+                await _providerManager.SaveImage(item, imageUrl, ImageType.Primary, null, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
             {
-                _logger.LogInformation("No artist photo found for {Artist}", resolved.PrimaryArtist);
+                _logger.LogInformation("No image found for {Name}", label);
                 return false;
             }
 
@@ -291,7 +296,7 @@ public class VideoProcessor
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not set the artist photo for {Path}", item.Path);
+            _logger.LogWarning(ex, "Could not set the image for {Path}", item.Path);
             return false;
         }
     }

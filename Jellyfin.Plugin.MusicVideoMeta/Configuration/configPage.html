@@ -39,10 +39,17 @@
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
                         <label class="emby-checkbox-label">
+                            <input id="UseAlbumCoverForVideos" type="checkbox" is="emby-checkbox" />
+                            <span>Use the album or single cover for videos</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">From your Music library first, then audiometa.io. Videos without a cover keep their own thumbnail.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
                             <input id="UseArtistImageForVideos" type="checkbox" is="emby-checkbox" />
                             <span>Also use the artist's photo for every video</span>
                         </label>
-                        <div class="fieldDescription checkboxFieldDescription">Off: each video keeps its own thumbnail.</div>
+                        <div class="fieldDescription checkboxFieldDescription">Only for videos without a cover. Off: they keep their own thumbnail.</div>
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
                         <label class="emby-checkbox-label">
@@ -97,7 +104,7 @@
         <script type="text/javascript">
             var MusicVideoMetaConfig = {
                 pluginUniqueId: 'e5862843-b50a-454e-a7b7-76f3dfa38f79',
-                checks: ['WriteFileTags', 'WriteNfo', 'UseArtistImage', 'UseArtistImageForVideos', 'RunAfterLibraryScan', 'DryRun', 'UseMusicBrainz', 'UseTheAudioDb'],
+                checks: ['WriteFileTags', 'WriteNfo', 'UseArtistImage', 'UseArtistImageForVideos', 'UseAlbumCoverForVideos', 'RunAfterLibraryScan', 'DryRun', 'UseMusicBrainz', 'UseTheAudioDb'],
                 texts: ['AudiometaApiKey', 'TheAudioDbApiKey']
             };
 
