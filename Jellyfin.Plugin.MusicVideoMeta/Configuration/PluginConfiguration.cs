@@ -38,9 +38,15 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool WriteNfo { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the artist's photo becomes the video's main image.
+    /// Gets or sets a value indicating whether artist folders get the artist's photo as their image.
     /// </summary>
     public bool UseArtistImage { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether each video's own image is also replaced with the artist's photo.
+    /// Off by default, so videos keep their own thumbnails.
+    /// </summary>
+    public bool UseArtistImageForVideos { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether new videos are processed after each library scan.

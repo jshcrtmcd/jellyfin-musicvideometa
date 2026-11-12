@@ -186,6 +186,74 @@ public class VideoResolver
         return result;
     }
 
+    /// <summary>
+    /// Whether a folder is an artist folder: directly inside a Music Videos library root.
+    /// </summary>
+    /// <param name="path">Folder path.</param>
+    /// <returns>True if it is.</returns>
+    public bool IsArtistFolder(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return false;
+        }
+
+        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path));
+        if (string.IsNullOrEmpty(parent))
+        {
+            return false;
+        }
+
+        parent = Path.TrimEndingDirectorySeparator(parent) + Path.DirectorySeparatorChar;
+        return GetRoots().Contains(parent, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// The artist folder a video sits in, if it is inside one.
+    /// </summary>
+    /// <param name="videoPath">Video path.</param>
+    /// <returns>Folder path or null.</returns>
+    public string? ArtistFolderOf(string videoPath)
+    {
+        var root = GetRoots()
+            .Where(r => videoPath.StartsWith(r, StringComparison.Ordinal))
+            .OrderByDescending(r => r.Length)
+            .FirstOrDefault();
+        if (root is null)
+        {
+            return null;
+        }
+
+        var parts = videoPath[root.Length..]
+            .Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? root + parts[0] : null;
+    }
+
+    /// <summary>
+    /// Find the photo for an artist folder.
+    /// </summary>
+    /// <param name="folderName">Folder name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Artist name and photo (local path or URL).</returns>
+    public async Task<ResolvedVideo> ResolveArtistImageAsync(string folderName, CancellationToken cancellationToken)
+    {
+        var library = await _index.GetAsync(cancellationToken).ConfigureAwait(false);
+        var lib = library.FindArtist(folderName);
+        var result = new ResolvedVideo
+        {
+            PrimaryArtist = lib?.Name ?? NameNormalizer.CleanArtistName(folderName),
+            ArtistImagePath = lib?.ImagePath,
+            ArtistInMusicLibrary = lib is not null,
+        };
+
+        if (result.ArtistImagePath is null)
+        {
+            await FindArtistImageAsync(result, null, cancellationToken).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
     private async Task FillFromAudiometaAsync(ResolvedVideo result, List<string> sources, CancellationToken ct)
     {
         var artistKey = NameNormalizer.ArtistKey(result.PrimaryArtist);

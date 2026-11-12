@@ -33,9 +33,16 @@
                     <div class="checkboxContainer checkboxContainer-withDescription">
                         <label class="emby-checkbox-label">
                             <input id="UseArtistImage" type="checkbox" is="emby-checkbox" />
-                            <span>Use the artist's photo as the main image</span>
+                            <span>Use the artist's photo for artist folders</span>
                         </label>
-                        <div class="fieldDescription checkboxFieldDescription">Takes the photo from your Music library artist first, then audiometa.io, then TheAudioDB.</div>
+                        <div class="fieldDescription checkboxFieldDescription">Takes the photo from your Music library artist first, then audiometa.io, then TheAudioDB. Folders that already have an image are left alone.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="UseArtistImageForVideos" type="checkbox" is="emby-checkbox" />
+                            <span>Also use the artist's photo for every video</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Off: each video keeps its own thumbnail.</div>
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
                         <label class="emby-checkbox-label">
@@ -90,7 +97,7 @@
         <script type="text/javascript">
             var MusicVideoMetaConfig = {
                 pluginUniqueId: 'e5862843-b50a-454e-a7b7-76f3dfa38f79',
-                checks: ['WriteFileTags', 'WriteNfo', 'UseArtistImage', 'RunAfterLibraryScan', 'DryRun', 'UseMusicBrainz', 'UseTheAudioDb'],
+                checks: ['WriteFileTags', 'WriteNfo', 'UseArtistImage', 'UseArtistImageForVideos', 'RunAfterLibraryScan', 'DryRun', 'UseMusicBrainz', 'UseTheAudioDb'],
                 texts: ['AudiometaApiKey', 'TheAudioDbApiKey']
             };
 

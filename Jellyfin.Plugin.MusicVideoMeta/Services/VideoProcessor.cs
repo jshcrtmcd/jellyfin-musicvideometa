@@ -120,6 +120,11 @@ public class VideoProcessor
                 }
             }
 
+            if ((Plugin.Instance?.Configuration.UseArtistImage ?? true) && !(Plugin.Instance?.Configuration.DryRun ?? false))
+            {
+                await SetFolderImagesAsync(videos, cancellationToken).ConfigureAwait(false);
+            }
+
             _logger.LogInformation(
                 "Music video metadata finished: {Updated} updated, {Failed} failed, {Skipped} skipped",
                 updated,
@@ -207,7 +212,7 @@ public class VideoProcessor
 
         await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
 
-        if (config.UseArtistImage)
+        if (config.UseArtistImageForVideos)
         {
             await SetArtistImageAsync(item, resolved, cancellationToken).ConfigureAwait(false);
         }
@@ -221,7 +226,34 @@ public class VideoProcessor
         return true;
     }
 
-    private async Task SetArtistImageAsync(MusicVideo item, ResolvedVideo resolved, CancellationToken cancellationToken)
+    private async Task SetFolderImagesAsync(System.Collections.Generic.IEnumerable<MusicVideo> videos, CancellationToken cancellationToken)
+    {
+        var folders = videos
+            .Select(v => _resolver.ArtistFolderOf(v.Path))
+            .Where(f => f is not null)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var set = 0;
+        foreach (var path in folders)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_libraryManager.FindByPath(path!, true) is not Folder folder || folder.HasImage(ImageType.Primary, 0))
+            {
+                continue;
+            }
+
+            var artist = await _resolver.ResolveArtistImageAsync(Path.GetFileName(path!), cancellationToken).ConfigureAwait(false);
+            if (await SetArtistImageAsync(folder, artist, cancellationToken).ConfigureAwait(false))
+            {
+                set++;
+            }
+        }
+
+        _logger.LogInformation("Artist photos set on {Count} artist folders", set);
+    }
+
+    private async Task<bool> SetArtistImageAsync(BaseItem item, ResolvedVideo resolved, CancellationToken cancellationToken)
     {
         try
         {
@@ -247,10 +279,11 @@ public class VideoProcessor
             else
             {
                 _logger.LogInformation("No artist photo found for {Artist}", resolved.PrimaryArtist);
-                return;
+                return false;
             }
 
             await item.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, cancellationToken).ConfigureAwait(false);
+            return true;
         }
         catch (OperationCanceledException)
         {
@@ -259,6 +292,7 @@ public class VideoProcessor
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not set the artist photo for {Path}", item.Path);
+            return false;
         }
     }
 }

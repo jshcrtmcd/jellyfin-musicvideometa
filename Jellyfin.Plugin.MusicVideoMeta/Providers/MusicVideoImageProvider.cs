@@ -11,7 +11,7 @@ using MediaBrowser.Model.Providers;
 namespace Jellyfin.Plugin.MusicVideoMeta.Providers;
 
 /// <summary>
-/// Offers the artist's photo as a music video's main image.
+/// Offers the artist's photo for artist folders in Music Videos libraries (and, if turned on, for each video).
 /// </summary>
 public class MusicVideoImageProvider : IRemoteImageProvider, IHasOrder
 {
@@ -37,7 +37,17 @@ public class MusicVideoImageProvider : IRemoteImageProvider, IHasOrder
 
     /// <inheritdoc />
     public bool Supports(BaseItem item)
-        => item is MusicVideo && (Plugin.Instance?.Configuration.UseArtistImage ?? true);
+    {
+        var config = Plugin.Instance?.Configuration;
+        if (item is MusicVideo)
+        {
+            return config?.UseArtistImageForVideos ?? false;
+        }
+
+        return item is Folder and not CollectionFolder
+            && (config?.UseArtistImage ?? true)
+            && _resolver.IsArtistFolder(item.Path);
+    }
 
     /// <inheritdoc />
     public IEnumerable<ImageType> GetSupportedImages(BaseItem item) => [ImageType.Primary];
@@ -45,7 +55,9 @@ public class MusicVideoImageProvider : IRemoteImageProvider, IHasOrder
     /// <inheritdoc />
     public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
     {
-        var resolved = await _resolver.ResolveAsync(item.Path, cancellationToken).ConfigureAwait(false);
+        var resolved = item is MusicVideo
+            ? await _resolver.ResolveAsync(item.Path, cancellationToken).ConfigureAwait(false)
+            : await _resolver.ResolveArtistImageAsync(System.IO.Path.GetFileName(item.Path), cancellationToken).ConfigureAwait(false);
         if (resolved is null)
         {
             return [];
