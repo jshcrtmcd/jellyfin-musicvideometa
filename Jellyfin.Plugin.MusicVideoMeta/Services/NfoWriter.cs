@@ -83,7 +83,7 @@ public class NfoWriter
                 doc.Save(writer);
             }
 
-            File.Move(temp, path, overwrite: true);
+            InPlaceFile.Replace(temp, path, ownerReference: videoPath);
             return true;
         }
         catch (Exception ex)

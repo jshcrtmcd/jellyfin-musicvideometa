@@ -103,6 +103,7 @@ public class FileTagWriter
 
         args.Add(temp);
 
+        var replacing = false;
         try
         {
             var (exitCode, stderr) = await RunAsync(ffmpeg, args, cancellationToken).ConfigureAwait(false);
@@ -115,25 +116,21 @@ public class FileTagWriter
                 return false;
             }
 
-            if (!OperatingSystem.IsWindows())
-            {
-                try
-                {
-                    File.SetUnixFileMode(temp, File.GetUnixFileMode(path));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Could not copy file permissions for {Path}", path);
-                }
-            }
-
-            File.Move(temp, path, overwrite: true);
+            // Overwrite the original's contents rather than swapping files, so its owner and permissions stay.
+            replacing = true;
+            InPlaceFile.Replace(temp, path);
             return true;
         }
         catch (OperationCanceledException)
         {
             TryDelete(temp);
             throw;
+        }
+        catch (Exception ex) when (replacing)
+        {
+            // The original may be half overwritten; keep the tagged copy so nothing is lost.
+            _logger.LogError(ex, "Overwriting {Path} failed; the tagged copy was kept at {Temp}", path, temp);
+            return false;
         }
         catch (Exception ex)
         {

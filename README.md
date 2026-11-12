@@ -34,7 +34,7 @@ Requires Jellyfin **12.4** or newer.
 2. Go to **Catalog**, install **Music Video Metadata**, and restart Jellyfin.
 3. Open **Plugins → Music Video Metadata** to check the settings.
 
-Jellyfin needs **write access** to the music video folders to write tags and `.nfo` files. A retagged file is a new file, so it ends up owned by the user Jellyfin runs as (permissions are copied from the original).
+Jellyfin needs **write access** to the music video files and folders. Retagged videos and updated `.nfo` files are overwritten in place, so they keep their owner, group and permissions. New `.nfo` files get the video's permissions, and its owner too when Jellyfin is allowed to change owners (for example when it runs as root); otherwise they're owned by the user Jellyfin runs as.
 
 ## Running it
 
