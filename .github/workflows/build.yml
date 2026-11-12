@@ -11,15 +11,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - name: Build
         run: dotnet build Jellyfin.Plugin.MusicVideoMeta/Jellyfin.Plugin.MusicVideoMeta.csproj -c Release
       - name: Test
         run: dotnet test tests/Jellyfin.Plugin.MusicVideoMeta.Tests/Jellyfin.Plugin.MusicVideoMeta.Tests.csproj -c Release
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: Jellyfin.Plugin.MusicVideoMeta
           path: Jellyfin.Plugin.MusicVideoMeta/bin/Release/net10.0/Jellyfin.Plugin.MusicVideoMeta.dll
