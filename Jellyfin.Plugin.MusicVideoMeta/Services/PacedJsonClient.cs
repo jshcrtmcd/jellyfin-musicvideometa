@@ -172,8 +172,14 @@ public abstract class PacedJsonClient : IDisposable
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
-                var wait = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(5 * (attempt + 1));
-                Logger.LogInformation("{Service}: rate limited, waiting {Seconds}s", ServiceName, wait.TotalSeconds);
+                var wait = response.Headers.RetryAfter?.Delta ?? TimeSpan.Zero;
+                var minimum = TimeSpan.FromSeconds(5 * (attempt + 1));
+                if (wait < minimum)
+                {
+                    wait = minimum;
+                }
+
+                Logger.LogDebug("{Service}: rate limited, waiting {Seconds}s", ServiceName, wait.TotalSeconds);
                 await Task.Delay(wait, cancellationToken).ConfigureAwait(false);
                 continue;
             }

@@ -63,6 +63,9 @@ public static class NameParser
         "sped", "chopped", "screwed", "pt.", "vol", "volume", "ii", "iii", "iv",
     };
 
+    // Suffixes YouTube channel names add to an artist's name, e.g. "kevingatesTV" or "DrakeOfficial".
+    private static readonly string[] _channelSuffixes = ["tv", "music", "official", "vevo", "channel", "hd", "videos", "records", "ent"];
+
     private static readonly (char From, char To)[] _fullWidth =
     [
         ('｜', '|'), ('：', ':'), ('⧸', '/'), ('／', '/'), ('？', '?'), ('＂', '"'), ('＊', '*'), ('＜', '<'),
@@ -124,6 +127,14 @@ public static class NameParser
                 }
             }
 
+            if (idx < 0 && FirstArtist(segments[0], isKnownArtist) is { } named && IsChannelOf(folderKey, KeyOf(named)))
+            {
+                // Folder is a channel name ("kevingatesTV") and the file names the real artist ("Kevin Gates - ...").
+                idx = 0;
+                result.Artist = NameNormalizer.CleanArtistName(named);
+                folderKey = KeyOf(named);
+            }
+
             if (idx < 0 && FirstArtist(segments[0], isKnownArtist) is { } first0 && isKnownArtist(first0))
             {
                 // Another library artist comes first, e.g. a guest verse filed under the main artist.
@@ -150,7 +161,7 @@ public static class NameParser
         if (artistSide is not null)
         {
             var sideArtists = SplitArtists(artistSide, isKnownArtist);
-            if (folderKey.Length == 0 && sideArtists.Count > 0)
+            if ((folderKey.Length == 0 || result.Artist is not null) && sideArtists.Count > 0)
             {
                 result.Artist = NameNormalizer.CleanArtistName(sideArtists[0]);
                 sideArtists.RemoveAt(0);
@@ -175,7 +186,7 @@ public static class NameParser
 
         result.Title = title;
 
-        var primaryKey = folderKey.Length > 0 ? folderKey : NameNormalizer.ArtistKey(result.Artist);
+        var primaryKey = result.Artist is not null ? NameNormalizer.ArtistKey(result.Artist) : folderKey;
         foreach (var name in featured.Select(f => NameNormalizer.CleanArtistName(Tidy(f))))
         {
             var key = NameNormalizer.ArtistKey(name);
@@ -234,6 +245,12 @@ public static class NameParser
 
         return parts;
     }
+
+    private static bool IsChannelOf(string folderKey, string artistKey)
+        => artistKey.Length >= 3
+            && folderKey.Length > artistKey.Length
+            && folderKey.StartsWith(artistKey, StringComparison.Ordinal)
+            && _channelSuffixes.Contains(folderKey[artistKey.Length..], StringComparer.Ordinal);
 
     private static string KeyOf(string? artist)
         => NameNormalizer.ArtistKey(artist is null ? null : NameNormalizer.CleanArtistName(artist));

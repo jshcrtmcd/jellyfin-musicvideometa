@@ -177,14 +177,15 @@ public class VideoProcessor
             return false;
         }
 
-        if (config.WriteFileTags)
+        var filesOk = true;
+        if (config.WriteFileTags && FileTagWriter.Supports(path))
         {
-            await _tagWriter.WriteAsync(path, resolved, cancellationToken).ConfigureAwait(false);
+            filesOk &= await _tagWriter.WriteAsync(path, resolved, cancellationToken).ConfigureAwait(false);
         }
 
         if (config.WriteNfo)
         {
-            _nfoWriter.Write(path, resolved);
+            filesOk &= _nfoWriter.Write(path, resolved);
         }
 
         item.Name = resolved.Title;
@@ -211,7 +212,12 @@ public class VideoProcessor
             await SetArtistImageAsync(item, resolved, cancellationToken).ConfigureAwait(false);
         }
 
-        _state.MarkDone(path);
+        // If a file couldn't be written (for example a read-only folder), try again on the next run.
+        if (filesOk)
+        {
+            _state.MarkDone(path);
+        }
+
         return true;
     }
 

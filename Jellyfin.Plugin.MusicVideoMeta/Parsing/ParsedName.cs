@@ -8,7 +8,7 @@ namespace Jellyfin.Plugin.MusicVideoMeta.Parsing;
 public class ParsedName
 {
     /// <summary>
-    /// Gets or sets the artist named in the file name. Only set when there is no artist folder.
+    /// Gets or sets the artist named in the file name. Set when there is no artist folder, or when the folder is a channel name like \"kevingatesTV\" and the file names the artist.
     /// </summary>
     public string? Artist { get; set; }
 

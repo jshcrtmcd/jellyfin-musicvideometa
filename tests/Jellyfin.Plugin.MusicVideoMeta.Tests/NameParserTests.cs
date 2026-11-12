@@ -101,6 +101,21 @@ public class NameParserTests
         Assert.Equal("Blinding Lights", p.Title);
     }
 
+    [Fact]
+    public void ChannelFolderUsesArtistFromFileName()
+    {
+        var p = NameParser.Parse("Kevin Gates - This Dat", "kevingatesTV", Known);
+        Assert.Equal("Kevin Gates", p.Artist);
+        Assert.Equal("This Dat", p.Title);
+        Assert.Empty(p.FeaturedArtists);
+    }
+
+    [Fact]
+    public void DirectedByIsDropped()
+    {
+        Assert.Equal("Big Sleep", NameParser.Parse("Big Sleep (Directed by Gaspar Noé)", "The Weeknd", Known).Title);
+    }
+
     [Theory]
     [InlineData("The Weeknd", "Weeknd")]
     [InlineData("Beyoncé", "BEYONCE")]

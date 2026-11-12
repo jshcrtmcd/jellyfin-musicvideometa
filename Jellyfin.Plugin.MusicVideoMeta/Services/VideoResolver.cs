@@ -75,7 +75,7 @@ public class VideoResolver
         var (folderArtist, albumFolder) = ReadFolders(path);
         var parsed = NameParser.Parse(Path.GetFileNameWithoutExtension(path), folderArtist, library.IsKnownArtist);
 
-        var rawArtist = folderArtist ?? parsed.Artist;
+        var rawArtist = parsed.Artist ?? folderArtist;
         if (string.IsNullOrWhiteSpace(rawArtist))
         {
             _logger.LogInformation("No artist folder and no artist in the file name, skipping {Path}", path);
@@ -133,8 +133,11 @@ public class VideoResolver
             }
         }
 
+        // Folders named after the video itself ("Artist/Song/Song.mkv") are not albums.
         if (albumFolder is not null
             && !_genericFolders.Contains(albumFolder)
+            && NameNormalizer.TitleKey(albumFolder) != NameNormalizer.TitleKey(Path.GetFileNameWithoutExtension(path))
+            && NameNormalizer.TitleKey(albumFolder) != NameNormalizer.TitleKey(parsed.Title)
             && NameNormalizer.ArtistKey(albumFolder) != NameNormalizer.ArtistKey(result.PrimaryArtist))
         {
             result.Album = albumFolder.Trim();
