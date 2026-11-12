@@ -16,7 +16,7 @@ def read_build_yaml() -> dict:
     # Minimal reader for the flat keys we need, so no PyYAML install is required.
     text = (ROOT / "build.yaml").read_text(encoding="utf-8")
     out = {}
-    for key in ("name", "guid", "targetAbi", "overview", "description", "category", "owner", "changelog"):
+    for key in ("name", "guid", "targetAbi", "overview", "description", "category", "owner", "changelog", "imageUrl"):
         m = re.search(rf'^{key}:\s*"?(.*?)"?\s*$', text, re.MULTILINE)
         if m:
             out[key] = m.group(1)
@@ -52,6 +52,8 @@ def main() -> None:
             "category": meta["category"],
         }
     )
+    if meta.get("imageUrl"):
+        plugin["imageUrl"] = meta["imageUrl"]
     plugin["versions"] = [v for v in plugin["versions"] if v["version"] != version]
     plugin["versions"].insert(0, entry)
 

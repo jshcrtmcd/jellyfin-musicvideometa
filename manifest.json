@@ -31,6 +31,7 @@
     "overview": "Artist, title and year for music videos, matched to your music library",
     "description": "Reads the artist from the first folder and the title from the file name, cleans up downloader junk, and matches the artist to your Music library so videos link to the right artist. Fills in title, year and album from your music library, audiometa.io, MusicBrainz and TheAudioDB, uses the artist's photo as the main image, and writes the tags into the video files and .nfo files.",
     "owner": "jshcrtmcd",
-    "category": "Metadata"
+    "category": "Metadata",
+    "imageUrl": "https://raw.githubusercontent.com/jshcrtmcd/jellyfin-musicvideometa/main/images/thumb.png"
   }
 ]
