@@ -154,7 +154,11 @@ public class VideoResolver
 
             result.Year ??= song.Year;
             result.Album = song.Album ?? result.Album;
-            result.AlbumImagePath = song.AlbumImagePath;
+            // Only a single's cover (album named like the song), so videos don't share one album cover.
+            if (NameNormalizer.TitleKey(song.Album) == NameNormalizer.TitleKey(song.Title))
+            {
+                result.AlbumImagePath = song.AlbumImagePath;
+            }
             if (result.Genres.Count == 0)
             {
                 result.Genres = song.Genres;
@@ -163,7 +167,7 @@ public class VideoResolver
             sources.Add("music library song");
         }
 
-        var wantCover = (Plugin.Instance?.Configuration.UseAlbumCoverForVideos ?? false) && result.AlbumImagePath is null;
+        var wantCover = (Plugin.Instance?.Configuration.UseAlbumCoverForVideos ?? true) && result.AlbumImagePath is null;
         if (result.Year is null || result.Album is null || wantCover)
         {
             await FillFromAudiometaAsync(result, sources, cancellationToken).ConfigureAwait(false);
@@ -261,9 +265,19 @@ public class VideoResolver
         var artistKey = NameNormalizer.ArtistKey(result.PrimaryArtist);
         var titleKey = NameNormalizer.TitleKey(result.Title);
         var tracks = await _audiometa.SearchTracksAsync(result.PrimaryArtist, result.Title, ct).ConfigureAwait(false);
-        var best = tracks
+        var matches = tracks
             .Where(t => NameNormalizer.TitleKey(t.Name) == titleKey
                 && (t.Artists ?? []).Any(a => NameNormalizer.ArtistKey(a.Name) == artistKey))
+            .ToList();
+
+        // The single's cover: a release of type "single" named like the song.
+        result.AlbumImageUrl ??= matches
+            .Where(t => string.Equals(t.Album?.AlbumType, "single", StringComparison.OrdinalIgnoreCase)
+                && NameNormalizer.TitleKey(t.Album?.Name) == titleKey)
+            .Select(t => AudiometaClient.BestImageUrl(t.Album?.Images))
+            .FirstOrDefault(u => u is not null);
+
+        var best = matches
             .OrderBy(t => AudiometaClient.YearOf(t.Album?.ReleaseDate) ?? int.MaxValue)
             .ThenBy(t => string.Equals(t.Album?.AlbumType, "album", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
             .FirstOrDefault();
@@ -273,7 +287,6 @@ public class VideoResolver
         }
 
         result.Year ??= AudiometaClient.YearOf(best.Album?.ReleaseDate);
-        result.AlbumImageUrl ??= AudiometaClient.BestImageUrl(best.Album?.Images);
         var type = best.Album?.AlbumType;
         if (result.Album is null
             && !string.IsNullOrWhiteSpace(best.Album?.Name)

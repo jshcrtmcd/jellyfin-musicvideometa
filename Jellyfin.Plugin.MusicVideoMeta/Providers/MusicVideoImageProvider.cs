@@ -41,7 +41,7 @@ public class MusicVideoImageProvider : IRemoteImageProvider, IHasOrder
         var config = Plugin.Instance?.Configuration;
         if (item is MusicVideo)
         {
-            return (config?.UseAlbumCoverForVideos ?? false) || (config?.UseArtistImageForVideos ?? false);
+            return (config?.UseAlbumCoverForVideos ?? true) || (config?.UseArtistImageForVideos ?? false);
         }
 
         return item is Folder and not CollectionFolder
@@ -67,7 +67,7 @@ public class MusicVideoImageProvider : IRemoteImageProvider, IHasOrder
         var config = Plugin.Instance?.Configuration;
         if (item is MusicVideo)
         {
-            if (config?.UseAlbumCoverForVideos ?? false)
+            if (config?.UseAlbumCoverForVideos ?? true)
             {
                 AddImage(list, ArtistImageSource.ToUrl(resolved.AlbumImagePath));
                 AddImage(list, resolved.AlbumImageUrl);
