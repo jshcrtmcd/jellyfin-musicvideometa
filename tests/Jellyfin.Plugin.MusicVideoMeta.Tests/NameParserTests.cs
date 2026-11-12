@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.MusicVideoMeta.Tests;
 public class NameParserTests
 {
     private static readonly HashSet<string> _library = new(
-        new[] { "Drake", "Rihanna", "Earth, Wind & Fire", "JAY-Z", "50 Cent", "The Weeknd", "Beyoncé", "Future", "Hilary Duff" }
+        new[] { "Gucci Mane", "J. Cole", "Paul Wall", "Drake", "Rihanna", "Earth, Wind & Fire", "JAY-Z", "50 Cent", "The Weeknd", "Beyoncé", "Future", "Hilary Duff" }
             .Select(NameNormalizer.ArtistKey),
         StringComparer.Ordinal);
 
@@ -114,6 +114,45 @@ public class NameParserTests
     public void DirectedByIsDropped()
     {
         Assert.Equal("Big Sleep", NameParser.Parse("Big Sleep (Directed by Gaspar Noé)", "The Weeknd", Known).Title);
+    }
+
+    [Fact]
+    public void FolderWithFeaturedArtist()
+    {
+        var p = NameParser.Parse("Get Lost", "Gucci Mane ft Birdman", Known);
+        Assert.Equal("Gucci Mane", p.Artist);
+        Assert.Equal(["Birdman"], p.FeaturedArtists);
+    }
+
+    [Fact]
+    public void FolderWithTrailingDash()
+    {
+        var p = NameParser.Parse("Kansas", "Gucci Mane ft Jim Jones -", Known);
+        Assert.Equal("Gucci Mane", p.Artist);
+        Assert.Equal(["Jim Jones"], p.FeaturedArtists);
+    }
+
+    [Fact]
+    public void LabelFolderUsesLibraryArtistFromFileName()
+    {
+        var p = NameParser.Parse("J. Cole - Everybody Dies", "Dreamville", Known);
+        Assert.Equal("J. Cole", p.Artist);
+        Assert.Equal("Everybody Dies", p.Title);
+        Assert.Empty(p.FeaturedArtists);
+    }
+
+    [Fact]
+    public void BracketFeaturedArtistsAreSplit()
+    {
+        var p = NameParser.Parse("Johnny Dang (feat. Paul Wall & Drodi)", "That Mexican OT", Known);
+        Assert.Equal("Johnny Dang", p.Title);
+        Assert.Equal(["Paul Wall", "Drodi"], p.FeaturedArtists);
+    }
+
+    [Fact]
+    public void PlainFolderLeavesArtistUnset()
+    {
+        Assert.Null(NameParser.Parse("Bingo", "Gucci Mane", Known).Artist);
     }
 
     [Theory]

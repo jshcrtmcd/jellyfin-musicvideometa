@@ -87,9 +87,28 @@ public static class NameParser
         var result = new ParsedName();
         var featured = new List<string>();
 
+        // Folder names like "Gucci Mane ft Birdman" or "Artist -": keep the main artist, the rest are featured.
+        if (folderArtist is not null)
+        {
+            var cleanedFolder = Tidy(FixCharacters(folderArtist)).Trim(' ', '-', '_', ',', '.');
+            var folderFeat = _featInline.Match(cleanedFolder);
+            if (folderFeat.Success && folderFeat.Index > 0 && !isKnownArtist(cleanedFolder))
+            {
+                featured.AddRange(SplitArtists(folderFeat.Groups[1].Value, isKnownArtist));
+                cleanedFolder = Tidy(cleanedFolder[..folderFeat.Index]);
+            }
+
+            if (!string.Equals(cleanedFolder, folderArtist, StringComparison.Ordinal))
+            {
+                result.Artist = cleanedFolder;
+            }
+
+            folderArtist = cleanedFolder;
+        }
+
         var s = FixCharacters(fileName);
         s = _videoId.Replace(s, m => LooksLikeVideoId(m.Groups[1].Value) ? string.Empty : m.Value);
-        s = StripBrackets(s, featured, result);
+        s = StripBrackets(s, featured, result, isKnownArtist);
         s = Tidy(s);
         s = _trackNumber.Replace(s, string.Empty);
 
@@ -137,8 +156,15 @@ public static class NameParser
 
             if (idx < 0 && FirstArtist(segments[0], isKnownArtist) is { } first0 && isKnownArtist(first0))
             {
-                // Another library artist comes first, e.g. a guest verse filed under the main artist.
                 idx = 0;
+                if (!isKnownArtist(folderArtist!))
+                {
+                    // The folder isn't a library artist (a label or channel like "Dreamville"): the file's artist is primary.
+                    result.Artist = NameNormalizer.CleanArtistName(first0);
+                    folderKey = KeyOf(first0);
+                }
+
+                // Otherwise another library artist comes first, e.g. a guest verse filed under the main artist.
             }
 
             if (idx >= 0)
@@ -269,7 +295,7 @@ public static class NameParser
             .Any(a => NameNormalizer.ArtistKey(NameNormalizer.CleanArtistName(a)) == folderKey);
     }
 
-    private static string StripBrackets(string s, List<string> featured, ParsedName result)
+    private static string StripBrackets(string s, List<string> featured, ParsedName result, Func<string, bool> isKnownArtist)
     {
         // Repeat so nested or adjacent brackets are all handled.
         for (var pass = 0; pass < 4; pass++)
@@ -287,7 +313,7 @@ public static class NameParser
                 var feat = _featPrefix.Match(inner);
                 if (feat.Success && !_tokenSplit.Split(feat.Groups[1].Value).Any(t => _strongJunk.Contains(t)))
                 {
-                    featured.Add(feat.Groups[1].Value);
+                    featured.AddRange(SplitArtists(feat.Groups[1].Value, isKnownArtist));
                     return " ";
                 }
 
