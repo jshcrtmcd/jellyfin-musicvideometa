@@ -80,21 +80,11 @@ public sealed class MusicLibraryIndex : IDisposable
     private Snapshot Build()
     {
         var snap = new Snapshot();
-        var musicLibraryIds = _libraryManager.GetVirtualFolders()
-            .Where(f => f.CollectionType == CollectionTypeOptions.music && Guid.TryParse(f.ItemId, out _))
-            .Select(f => Guid.Parse(f.ItemId))
-            .ToArray();
-
-        if (musicLibraryIds.Length == 0)
-        {
-            _logger.LogInformation("No Music library found; artist names will come from folders and online services only");
-            return snap;
-        }
-
+        // All songs on the server. Music videos aren't Audio items and audiobooks are a different type,
+        // so this is effectively every Music library, without depending on how library folders are linked.
         var songs = _libraryManager.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = [BaseItemKind.Audio],
-            TopParentIds = musicLibraryIds,
             Recursive = true,
             IsVirtualItem = false,
         });
@@ -129,6 +119,11 @@ public sealed class MusicLibraryIndex : IDisposable
         foreach (var artist in artistItems.OfType<MusicArtist>())
         {
             snap.AddArtistItem(artist);
+        }
+
+        if (songs.Count == 0)
+        {
+            _logger.LogWarning("No songs found in any Music library; artist names will come from folders and online services only");
         }
 
         _logger.LogInformation(
