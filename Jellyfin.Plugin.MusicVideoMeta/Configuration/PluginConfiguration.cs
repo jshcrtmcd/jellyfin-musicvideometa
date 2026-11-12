@@ -49,10 +49,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool UseArtistImageForVideos { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether a video's image becomes the song's album or single cover when one is found.
-    /// Videos without a cover keep their own thumbnail.
+    /// Gets or sets a value indicating whether a video's image becomes the cover of the song's single, when one is found.
+    /// Album covers are never used, since they would repeat across videos. Videos without a single cover keep
+    /// the image Jellyfin gives them (embedded thumbnail or a frame from the video).
     /// </summary>
-    public bool UseAlbumCoverForVideos { get; set; }
+    public bool UseAlbumCoverForVideos { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether new videos are processed after each library scan.
