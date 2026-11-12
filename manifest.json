@@ -2,6 +2,14 @@
   {
     "versions": [
       {
+        "version": "1.0.1.0",
+        "changelog": "https://github.com/jshcrtmcd/jellyfin-musicvideometa/releases/tag/v1.0.1",
+        "targetAbi": "12.4.0.0",
+        "sourceUrl": "https://github.com/jshcrtmcd/jellyfin-musicvideometa/releases/download/v1.0.1/musicvideometa_1.0.1.0.zip",
+        "checksum": "9c3d06390a3ee3fdc1404351ec5e3f95",
+        "timestamp": "2026-11-12T10:20:06Z"
+      },
+      {
         "version": "1.0.0.0",
         "changelog": "https://github.com/jshcrtmcd/jellyfin-musicvideometa/releases/tag/v1.0.0",
         "targetAbi": "12.4.0.0",
