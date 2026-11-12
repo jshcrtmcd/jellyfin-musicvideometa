@@ -20,7 +20,7 @@ Requires Jellyfin **12.4** or newer.
 - **Featured artists** from `feat.`, `ft.`, `(with …)`, `A x B` and `A, B` are added as extra artists, so the video also shows up under them.
 - **Year, album and genre** from the matching song in your Music library first, then audiometa.io, then MusicBrainz. A year in the file name, like `(2015)`, wins over all of them.
 - **Artist folders get the artist's photo**: from the Music library artist first, then audiometa.io, then TheAudioDB. Folders that already have an image are left alone. 
-- **Videos get the album or single cover** when one is found (Music library first, then audiometa.io); otherwise they keep their own thumbnail. Using the artist photo for videos without a cover is an option.
+- **Videos keep their own thumbnail** (a frame from the video or its embedded thumbnail). Using the album or single cover, or the artist photo, for videos are options.
 - **Writes tags into the file** (title, artist, album artist, year, album, genre) with Jellyfin's ffmpeg. Streams are copied, not re-encoded. The original file is replaced and **no backup is kept**. Works on mp4, m4v, mov, mkv and webm.
 - **Writes an `.nfo`** next to each video (`<musicvideo>` with title, artists, album, year, genres). Existing `.nfo` files are updated in place, so other fields are kept.
 
@@ -62,7 +62,7 @@ For **Identify** and normal refreshes, enable it on the Music Videos library und
 | Write tags into the video files | On | No backup is kept. |
 | Write .nfo files | On | |
 | Use the artist's photo for artist folders | On | |
-| Use the album or single cover for videos | On | |
+| Use the album or single cover for videos | Off | |
 | Also use the artist's photo for every video | Off | Only for videos without a cover. |
 | Process new videos after each library scan | On | |
 | Dry run | Off | Only logs what would change. |

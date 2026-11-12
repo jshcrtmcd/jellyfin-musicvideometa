@@ -163,7 +163,7 @@ public class VideoResolver
             sources.Add("music library song");
         }
 
-        var wantCover = (Plugin.Instance?.Configuration.UseAlbumCoverForVideos ?? true) && result.AlbumImagePath is null;
+        var wantCover = (Plugin.Instance?.Configuration.UseAlbumCoverForVideos ?? false) && result.AlbumImagePath is null;
         if (result.Year is null || result.Album is null || wantCover)
         {
             await FillFromAudiometaAsync(result, sources, cancellationToken).ConfigureAwait(false);
