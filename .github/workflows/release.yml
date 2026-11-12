@@ -1,0 +1,72 @@
+name: Release
+
+# Run from the Actions tab (enter a version like 1.0.1), or push a tag like v1.0.1.
+# Builds the plugin, publishes a GitHub release, and adds the version to manifest.json.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Version
+        id: v
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then tag="v${{ inputs.version }}"; else tag="$GITHUB_REF_NAME"; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          IFS=. read -r a b c d <<< "${tag#v}"
+          echo "version=${a:-0}.${b:-0}.${c:-0}.${d:-0}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          dotnet build Jellyfin.Plugin.MusicVideoMeta/Jellyfin.Plugin.MusicVideoMeta.csproj -c Release \
+            -p:Version=${{ steps.v.outputs.version }} \
+            -p:AssemblyVersion=${{ steps.v.outputs.version }} \
+            -p:FileVersion=${{ steps.v.outputs.version }}
+
+      - name: Package
+        id: pkg
+        run: |
+          mkdir -p dist
+          zip="musicvideometa_${{ steps.v.outputs.version }}.zip"
+          (cd Jellyfin.Plugin.MusicVideoMeta/bin/Release/net10.0 && zip -j "$GITHUB_WORKSPACE/dist/$zip" Jellyfin.Plugin.MusicVideoMeta.dll)
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+          echo "md5=$(md5sum "dist/$zip" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" "dist/${{ steps.pkg.outputs.zip }}" \
+            --target "$GITHUB_SHA" --title "${{ steps.v.outputs.tag }}" --generate-notes
+
+      - name: Update manifest.json
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+          CHECKSUM: ${{ steps.pkg.outputs.md5 }}
+          TAG: ${{ steps.v.outputs.tag }}
+          SOURCE_URL: https://github.com/${{ github.repository }}/releases/download/${{ steps.v.outputs.tag }}/${{ steps.pkg.outputs.zip }}
+        run: |
+          git checkout -q main
+          python3 scripts/update_manifest.py
+          git add manifest.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Add ${{ steps.v.outputs.version }} to manifest"
+          git push origin HEAD:main

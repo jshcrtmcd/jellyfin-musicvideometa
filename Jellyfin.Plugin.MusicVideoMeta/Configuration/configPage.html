@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Music Video Metadata</title>
+</head>
+<body>
+    <div id="MusicVideoMetaConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <h2>Music Video Metadata</h2>
+                <p>
+                    Reads the artist from the first folder in your Music Videos library and the title from the file name,
+                    then matches them to your Music library, audiometa.io, MusicBrainz and TheAudioDB.
+                    Run it from <b>Dashboard → Scheduled Tasks → Music Video Metadata</b>, or let it run after each library scan.
+                </p>
+                <form id="MusicVideoMetaConfigForm">
+                    <h3>What to change</h3>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="WriteFileTags" type="checkbox" is="emby-checkbox" />
+                            <span>Write tags into the video files</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Artist, title, year, album and genre, written with ffmpeg. Streams are copied, not re-encoded. The original file is replaced; no backup is kept. Supports mp4, m4v, mov, mkv and webm.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="WriteNfo" type="checkbox" is="emby-checkbox" />
+                            <span>Write .nfo files</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Saved next to each video. Existing .nfo files are updated, keeping fields this plugin doesn't manage.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="UseArtistImage" type="checkbox" is="emby-checkbox" />
+                            <span>Use the artist's photo as the main image</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Takes the photo from your Music library artist first, then audiometa.io, then TheAudioDB.</div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="RunAfterLibraryScan" type="checkbox" is="emby-checkbox" />
+                            <span>Process new videos after each library scan</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="DryRun" type="checkbox" is="emby-checkbox" />
+                            <span>Dry run</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Only log what would change. Nothing is written and nothing is marked as done.</div>
+                    </div>
+
+                    <h3>Online services</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="AudiometaApiKey">audiometa.io API key</label>
+                        <input id="AudiometaApiKey" type="password" is="emby-input" autocomplete="off" />
+                        <div class="fieldDescription">Leave empty to use the key saved in the Audiometa plugin.</div>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="UseMusicBrainz" type="checkbox" is="emby-checkbox" />
+                            <span>Use MusicBrainz for years and artist spelling</span>
+                        </label>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="UseTheAudioDb" type="checkbox" is="emby-checkbox" />
+                            <span>Use TheAudioDB for artist photos</span>
+                        </label>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="TheAudioDbApiKey">TheAudioDB API key</label>
+                        <input id="TheAudioDbApiKey" type="text" is="emby-input" autocomplete="off" />
+                        <div class="fieldDescription">123 is TheAudioDB's free public key.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CacheHours">Cache hours</label>
+                        <input id="CacheHours" type="number" is="emby-input" min="0" max="720" />
+                        <div class="fieldDescription">How long online lookups are kept in memory. 0 disables caching.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var MusicVideoMetaConfig = {
+                pluginUniqueId: 'e5862843-b50a-454e-a7b7-76f3dfa38f79',
+                checks: ['WriteFileTags', 'WriteNfo', 'UseArtistImage', 'RunAfterLibraryScan', 'DryRun', 'UseMusicBrainz', 'UseTheAudioDb'],
+                texts: ['AudiometaApiKey', 'TheAudioDbApiKey']
+            };
+
+            document.querySelector('#MusicVideoMetaConfigPage')
+                .addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(MusicVideoMetaConfig.pluginUniqueId).then(function (config) {
+                        MusicVideoMetaConfig.checks.forEach(function (id) {
+                            document.querySelector('#' + id).checked = !!config[id];
+                        });
+                        MusicVideoMetaConfig.texts.forEach(function (id) {
+                            document.querySelector('#' + id).value = config[id] || '';
+                        });
+                        document.querySelector('#CacheHours').value = config.CacheHours;
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+            document.querySelector('#MusicVideoMetaConfigForm')
+                .addEventListener('submit', function (e) {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(MusicVideoMetaConfig.pluginUniqueId).then(function (config) {
+                        MusicVideoMetaConfig.checks.forEach(function (id) {
+                            config[id] = document.querySelector('#' + id).checked;
+                        });
+                        MusicVideoMetaConfig.texts.forEach(function (id) {
+                            config[id] = document.querySelector('#' + id).value.trim();
+                        });
+                        config.CacheHours = parseInt(document.querySelector('#CacheHours').value, 10) || 0;
+                        ApiClient.updatePluginConfiguration(MusicVideoMetaConfig.pluginUniqueId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+
+                    e.preventDefault();
+                    return false;
+                });
+        </script>
+    </div>
+</body>
+</html>
